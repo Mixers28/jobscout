@@ -1,0 +1,11 @@
+# Structured guardrail contract — parsed directly instead of regexing the markdown.
+# Keep in sync with prompt_guardrail.md.
+min_cover_words: 150
+max_cover_words: 250
+require_claim_evidence_refs: true
+require_non_empty_evidence_path: true
+required_inputs:
+  - job
+  - skills_profile
+  - truth_bank
+right_to_work_field_path: "identity.right_to_work_uk"

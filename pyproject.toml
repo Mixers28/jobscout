@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jobscout"
+version = "0.1.0"
+description = "JobScout Copilot v0.1 scaffolding"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "apps/api",
+  "apps/worker",
+  "packages/shared",
+]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = true
+pretty = true

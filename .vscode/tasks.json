@@ -1,0 +1,78 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Session (Agent - Coder)",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "handoffkit",
+        "session",
+        "start",
+        "--agent-role",
+        "Coder",
+        "--open-docs"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Session (Agent - Architect)",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "handoffkit",
+        "session",
+        "start",
+        "--agent-role",
+        "Architect",
+        "--open-docs"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Session (Agent - Reviewer)",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "handoffkit",
+        "session",
+        "start",
+        "--agent-role",
+        "Reviewer",
+        "--open-docs"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Session (Agent - QA)",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "handoffkit",
+        "session",
+        "start",
+        "--agent-role",
+        "QA",
+        "--open-docs"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "End Session (Agent + Commit)",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-m",
+        "handoffkit",
+        "session",
+        "end",
+        "--commit"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+version: "0.1"
+last_updated: "2026-02-18"
+
+hard_filters:
+  reject_daily_onsite_outside_scotland_if_not_remote: true
+  reject_clearance_mismatch_unless_willing_to_obtain: true
+  excluded_role_families:
+    - "software_engineering_only"
+    - "sales_only"
+
+region_boosts:
+  aberdeen_keywords:
+    - "energy"
+    - "offshore"
+    - "on-call"
+    - "multi-site"
+    - "itil"
+  inverness_highlands_keywords:
+    - "onsite"
+    - "infrastructure"
+    - "generalist"
+  public_sector_keywords:
+    - "nhs"
+    - "council"
+    - "governance"
+    - "change control"
+    - "m365"
+
+weights:
+  microsoft_365_core:
+    max: 30
+    exchange_online_mailflow_hybrid: 12
+    sharepoint_online_migration: 10
+    teams_administration: 8
+
+  backup_dr:
+    max: 25
+    azure_backup: 10
+    veeam: 10
+    storage_restore_testing: 5
+
+  ops_service_ownership:
+    max: 15
+    l3_incident_ownership: 15
+
+  migrations_project_delivery:
+    max: 15
+    onprem_to_cloud_migrations: 10
+    vendor_management_delivery: 5
+
+  telco_teams_voice:
+    max: 5
+    avaya_sbc_sip_teams_phone: 5
+
+  location_work_mode_fit:
+    range:
+      min: -10
+      max: 10
+    hybrid_within_radius: 10
+    remote_uk: 6
+    onsite_within_radius: 6
+    onsite_far_outside_preferred: -10
+
+decision_thresholds:
+  apply:
+    min: 80
+    max: 100
+  review:
+    min: 60
+    max: 79
+  skip:
+    max: 59
+
+explainability:
+  top_reasons_count: 5
+  missing_keywords_count: 3

@@ -1,0 +1,243 @@
+{
+  "profile_version": "0.1",
+  "source": {
+    "document": "Michael Spiegelhoff_CV.pdf",
+    "notes": "Extracted from CV text; evidence fields quote CV phrases."
+  },
+  "candidate": {
+    "name": "Michael Spiegelhoff",
+    "contact": {
+      "phone": "07495622641",
+      "email": "m.spiegelhoff@outlook.com",
+      "linkedin": "https://www.linkedin.com/in/michael-spiegelhoff-55260410a/"
+    }
+  },
+  "target_roles": [
+    "Microsoft 365 Engineer",
+    "Infrastructure Engineer",
+    "IT Specialist (M365 / Backup)",
+    "Systems Administrator (M365 / Hybrid)"
+  ],
+  "core_domains": [
+    {
+      "domain": "Microsoft 365 administration",
+      "skills": [
+        {
+          "skill": "Exchange Online",
+          "keywords": [
+            "exchange online",
+            "exchange",
+            "mail flow",
+            "smtp relay",
+            "hybrid exchange"
+          ],
+          "evidence": [
+            "manage O365 environment ... Exchange online"
+          ]
+        },
+        {
+          "skill": "SharePoint Online",
+          "keywords": [
+            "sharepoint online",
+            "sharepoint",
+            "migrations"
+          ],
+          "evidence": [
+            "manage O365 environment ... SharePoint",
+            "Migration of on-prem services to cloud (Exchange, SharePoint ...)"
+          ]
+        },
+        {
+          "skill": "Microsoft Teams (incl. telephony context)",
+          "keywords": [
+            "microsoft teams",
+            "teams phone",
+            "sbc",
+            "sip",
+            "telephony"
+          ],
+          "evidence": [
+            "Started projects to migration on-prem Avaya to SBC SIP Teams Solution"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "Backup / DR",
+      "skills": [
+        {
+          "skill": "Veeam Backup",
+          "keywords": [
+            "veeam",
+            "backup & replication",
+            "restore testing"
+          ],
+          "evidence": [
+            "Veeam Backup – NAS, Tape and Cloud Cold Storage",
+            "Veeam Backup services ... tape backup, NAS and Cloud cold storage"
+          ]
+        },
+        {
+          "skill": "Azure Backup",
+          "keywords": [
+            "azure backup",
+            "recovery services vault"
+          ],
+          "evidence": [
+            "Azure backup and Veeam Backup – NAS, Tape and Cloud Cold Storage",
+            "Azure Cloud backup"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "Identity",
+      "skills": [
+        {
+          "skill": "Microsoft Entra ID (Azure AD) administration",
+          "keywords": [
+            "entra id",
+            "azure ad",
+            "microsoft intra",
+            "mfa",
+            "conditional access",
+            "sso"
+          ],
+          "evidence": [
+            "Azure AD ... (Manage, maintain Azure AD -. Microsoft Intra)"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "Operations / Delivery",
+      "skills": [
+        {
+          "skill": "L3 support (service ownership)",
+          "keywords": [
+            "l3 support",
+            "incident management",
+            "problem management",
+            "service owner"
+          ],
+          "evidence": [
+            "L3 Support (service owner incident and resolution management)"
+          ]
+        },
+        {
+          "skill": "Project management (technical delivery)",
+          "keywords": [
+            "project management",
+            "migration",
+            "stakeholders",
+            "delivery"
+          ],
+          "evidence": [
+            "Project Management",
+            "delivering of new services, migration of on-prem to cloud solutions"
+          ]
+        },
+        {
+          "skill": "Vendor management / procurement",
+          "keywords": [
+            "vendor management",
+            "procurement",
+            "negotiation"
+          ],
+          "evidence": [
+            "Vendor Management",
+            "IT procurement"
+          ]
+        },
+        {
+          "skill": "Multi-site / international deployments",
+          "keywords": [
+            "multi-site",
+            "office deployment",
+            "onsite installation"
+          ],
+          "evidence": [
+            "onsite installation and renovations for offices in Netherlands, USA, China, United Arab Emirates"
+          ]
+        }
+      ]
+    },
+    {
+      "domain": "Storage / Networking support background",
+      "skills": [
+        {
+          "skill": "NAS / SMB troubleshooting",
+          "keywords": [
+            "nas",
+            "smb",
+            "network diagnostics",
+            "storage"
+          ],
+          "evidence": [
+            "Network support for NAS, and SMB products",
+            "Provided ... network diagnostics"
+          ]
+        }
+      ]
+    }
+  ],
+  "certifications": [
+    {
+      "name": "AZ-104",
+      "status": "studying"
+    },
+    {
+      "name": "CISSP",
+      "status": "planned"
+    },
+    {
+      "name": "CISA",
+      "status": "planning"
+    }
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "fluent/native"
+    },
+    {
+      "language": "Afrikaans",
+      "level": "conversational"
+    },
+    {
+      "language": "Dutch",
+      "level": "conversational"
+    },
+    {
+      "language": "German",
+      "level": "basic conversational"
+    }
+  ],
+  "highlights": [
+    "Managed sites and installations of teams on projects valued more than $15 Million.",
+    "Maintain KPI targets for each quarter and improved on goals by 20%."
+  ],
+  "matching_preferences": {
+    "country": "United Kingdom",
+    "region_focus": "North/East Scotland",
+    "work_mode": [
+      "hybrid",
+      "remote",
+      "onsite"
+    ],
+    "exclude_keywords": [
+      "commission-only",
+      "door-to-door"
+    ],
+    "include_keywords": [
+      "microsoft 365",
+      "exchange",
+      "sharepoint",
+      "backup",
+      "veeam",
+      "azure",
+      "entra id",
+      "teams"
+    ]
+  }
+}

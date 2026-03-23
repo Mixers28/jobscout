@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY packages/ packages/
+COPY apps/api/ apps/api/
+COPY apps/worker/ apps/worker/
+COPY infra/ infra/
+COPY alembic.ini .
+
+COPY skills_profile.json truth_bank.yml scoring_weights.yml \
+     RUBRIC.md prompt_guardrail.md prompt_guardrail.yml ./
+
+ENV PYTHONPATH=packages/shared:apps/api:apps/worker
+
+EXPOSE 8000
+
+CMD sh -c "python -m alembic -c alembic.ini upgrade head && \
+           uvicorn app.main:app --app-dir apps/api --host 0.0.0.0 --port 8000"

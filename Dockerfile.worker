@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY packages/ packages/
+COPY apps/api/ apps/api/
+COPY apps/worker/ apps/worker/
+COPY infra/ infra/
+COPY alembic.ini .
+
+COPY skills_profile.json truth_bank.yml scoring_weights.yml \
+     RUBRIC.md prompt_guardrail.md prompt_guardrail.yml ./
+
+ENV PYTHONPATH=packages/shared:apps/api:apps/worker
+
+CMD ["python", "-m", "worker.main", "--schedule-loop"]

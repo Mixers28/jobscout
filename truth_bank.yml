@@ -1,0 +1,94 @@
+# truth_bank.yml (fill once; used to answer screening questions without guessing)
+version: "0.1"
+last_updated: "2026-02-18"
+
+identity:
+  full_name: "Michael Spiegelhoff"
+  preferred_name: ""
+  email: "m.spiegelhoff@outlook.com"
+  phone: "07495622641"
+  linkedin: "https://www.linkedin.com/in/michael-spiegelhoff-55260410a/"
+  location_base: "Aberdeen"         # e.g., Aberdeen / Inverness / Dundee
+  right_to_work_uk: "Yes, leave to remain"      # yes/no + details (citizen/visa type + expiry if applicable)
+
+role_preferences:
+  target_titles:
+    - "Microsoft 365 Engineer"
+    - "Infrastructure Engineer"
+    - "IT Specialist (M365 / Backup)"
+  seniority: ""             # e.g., mid / senior
+  employment_type: ""       # permanent / contract
+  work_mode_preference:     # rank your preference
+    - "hybrid"
+    - "remote"
+    - "onsite"
+  locations:
+    primary_region: "North/East Scotland"
+    towns_cities: [Aberdeen]        # e.g., ["Aberdeen","Inverness","Dundee","Perth"]
+    max_commute_minutes: "90"
+    willing_to_relocate: "yes" # yes/no
+  travel:
+    willing_to_travel: "yes"   # yes
+    overnight_travel_ok: "yes" # yes
+    driving_licence: "yes"     # yes
+    own_vehicle: "yes"         # yes
+
+availability:
+  notice_period: "3 months"         # e.g., 1 month
+  earliest_start_date: "May"
+  interview_availability: "3 days notice"
+
+compensation:
+  salary_expectation_gbp:
+    min: "48000"
+    target: "54000"
+    notes: "hybrid/oniste"               # include whether flexible + for hybrid/onsite
+  benefits_priorities: [pension, training buget, remote days, bonus]   # e.g., pension, training budget, bonus, remote days
+
+security_and_compliance:
+  security_clearance: "none"    # none / BPSS / SC / DV + expiry if applicable
+  willing_to_undergo_checks: "yes"
+
+core_screening_answers:
+  # Keep these short and consistent; the copilot will tailor per job.
+  why_this_role: "Looking for challange and locate close to family"
+  why_leaving_current_role: "constant travel to Germany every other month, close to family"
+  strengths_top3: [Honesty, Dedication, Loyalty]
+  development_area: "networking, Netowrk security_and_compliance,"      # honest but safe
+  proudest_project: "Migration of onprem telephone exchange to cloud (teams_voice)"
+  incident_example_star: "resolve issues that colleagues and level 1 team could not resolve, looked close at detail and noted the mismatch between username and actual user name" # Situation/Task/Action/Result
+  stakeholder_example: "worked with various level of user and stakeholders, users to executives"
+  leadership_or_mentoring_example: "Previous experience managing teams and leading them to excellence in CS teams"
+  salary_question_script: ""
+
+technical_truths:
+  # Use concrete numbers only if you’re sure.
+  m365:
+    tenant_size_users: "450"
+    exchange_hybrid: "yes, currenly migrating that to clouid"      # yes/no + brief
+    sharepoint_migrations: "yes, migated on prem to sharepoint online"# yes/no + brief
+    teams_voice: "yes, current using cloud services"          # yes/no + brief
+    tooling: [exchange admin, M365 Adminc center, Powerhsell, Purview, Veeam Backups and resotre etc. ]              # e.g., ["Exchange Admin Center","M365 Admin Center","PowerShell"]
+  identity:
+    entra_id_tasks: [USer lifecycle, MFA rollout, COntional Access, Teams user, groups and phone provisioning, ]       # e.g., ["user lifecycle","MFA rollout","Conditional Access"]
+    aad_connect: "yes, managing existing infra with AAD Conenct, manage users and groups"          # yes/no + brief
+  backup_dr:
+    veeam_version: "v12"
+    azure_backup_scope: "full metal"   # VMs/fileshares/etc.
+    backup_targets: [Nas, Tape and cold storage (cloud)]       # ["NAS","tape","cold storage"]
+    restore_testing_frequency: "Monthly" # e.g., monthly
+    rpo_rto_targets: "12/4"      # only if documented
+  infrastructure:
+    windows_server_versions: [2019]
+    networking: [DNS, DHCP, TCP/IP]           # e.g., "DNS, DHCP, TCP/IP, VPN"
+    scripting: [Powershell Basics, Some MS Graph]            # e.g., "PowerShell basics"
+  telco:
+    avaya_to_teams_context: "Migrated Avaya to teams via the onboarding of partners for teams connect."
+
+references:
+  available_on_request: "yes"
+  referee_contacts: []       # optional; usually keep private
+
+notes:
+  # Any non-standard items to remember (e.g., contract limits, health constraints, etc.).
+  misc: ""

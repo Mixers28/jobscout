@@ -1,0 +1,17 @@
+{
+  "token_budget": 7000,
+  "baseline_files": [
+    "docs/PROJECT_CONTEXT.md",
+    "docs/NOW.md"
+  ],
+  "session_notes_file": "docs/SESSION_NOTES.md",
+  "session_notes_tail_lines": 120,
+  "protocol_file": "docs/AGENT_SESSION_PROTOCOL.md",
+  "protocol_tail_lines": 120,
+  "spec_file": "SPEC.md",
+  "invariants_file": "docs/INVARIANTS.md",
+  "require_spec": true,
+  "require_invariants": true,
+  "auto_include_spec": true,
+  "auto_include_invariants": true
+}

@@ -1,0 +1,15 @@
+.git
+.github
+.venv
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.vscode
+.claude
+__pycache__
+*.pyc
+.env
+apps/web/.next
+apps/web/node_modules
+jobscout.db
+docs/local-mcp-context-kit.code-workspace
