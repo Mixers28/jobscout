@@ -22,6 +22,7 @@ services:
       retries: 10
 
   migrate:
+    exclude_from_hc: true
     build:
       context: .
       dockerfile: Dockerfile.api
