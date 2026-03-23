@@ -38,7 +38,7 @@ For a local Coolify machine, use this repository as a Git-backed `Docker Compose
 1. Put this project in a Git repository and push it to a provider Coolify can access.
 2. In Coolify, create a new `Application`.
 3. Select the repository and choose the `Docker Compose` build pack.
-4. Point Coolify at `docker-compose.yml` in the repository root.
+4. Point Coolify at `docker-compose.coolify.yml` in the repository root.
 5. Expose the `web` service publicly and keep `api`, `worker`, `postgres`, and `redis` internal.
 6. Add environment variables from `.env.example`, especially:
    - `JOBSCOUT_DATABASE_URL=postgresql+psycopg://jobscout:jobscout@postgres:5432/jobscout`
@@ -47,7 +47,7 @@ For a local Coolify machine, use this repository as a Git-backed `Docker Compose
 
 Notes:
 - The web container now runs a production Next.js build and reaches the API over the internal Docker network using `API_BASE_URL=http://api:8000`.
-- Host port mappings in `docker-compose.yml` are acceptable for a local-only deployment, but Coolify can also front the `web` service through its proxy.
+- Use `docker-compose.coolify.yml` in Coolify to avoid host-port conflicts on the server. Keep `docker-compose.yml` for direct local Docker use on your workstation.
 - See `COOLIFY.md` for the full deployment checklist.
 
 ## Quick start (local / without Docker)
