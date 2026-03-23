@@ -212,6 +212,26 @@ async def test_schedule_run_and_run_logs(api_client: httpx.AsyncClient) -> None:
     assert runs[0]["status"] in {"success", "failed"}
 
 
+async def test_test_notification_endpoint_reports_channel_status(api_client: httpx.AsyncClient) -> None:
+    with patch(
+        "app.routers.jobs.send_notifications",
+        return_value={
+            "attempted": 1,
+            "sent": 1,
+            "channels": [{"event": "manual_test", "channel": "discord", "ok": True}],
+            "errors": [],
+        },
+    ):
+        response = await api_client.post("/jobs/notifications/test")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["attempted"] == 1
+    assert payload["sent"] == 1
+    assert payload["channels"][0]["channel"] == "discord"
+    assert payload["errors"] == []
+
+
 async def test_decision_rollback_on_pack_failure(api_client: httpx.AsyncClient) -> None:
     """When pack generation fails, update_decision should rollback the decision and return 500."""
     await api_client.post("/sources/register", json=_sample_sources())

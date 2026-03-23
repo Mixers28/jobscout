@@ -15,6 +15,12 @@ type SchedulerRun = {
   started_at: string;
   completed_at: string;
   error: string | null;
+  notifications: {
+    attempted?: number;
+    sent?: number;
+    channels?: Array<{ event?: string; channel?: string; ok?: boolean }>;
+    errors?: string[];
+  };
 };
 
 const ADVANCED_SOURCES_JSON = `[
@@ -326,11 +332,46 @@ export default async function OpsPage() {
           <form action="/api/schedule-run" method="post">
             <button type="submit">run scheduled cycle</button>
           </form>
+          <form action="/api/notifications/test" method="post">
+            <button type="submit">send test webhook</button>
+          </form>
         </div>
+        <p style={{ color: "#666", marginTop: "10px" }}>
+          Use <strong>send test webhook</strong> to verify Discord delivery without waiting for a scored job to
+          trigger notifications.
+        </p>
       </section>
 
       <section style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
-        <h2>6) Advanced Source JSON (optional)</h2>
+        <h2>6) Recent Scheduler Runs</h2>
+        {runs.length === 0 ? (
+          <p>no scheduled runs logged yet</p>
+        ) : (
+          <ul>
+            {runs.map((run) => (
+              <li key={run.run_id} style={{ marginBottom: "12px" }}>
+                {run.status}
+                {" | attempts: "}
+                {run.attempts}
+                {" | notifications: "}
+                {run.notifications.sent ?? 0}/{run.notifications.attempted ?? 0}
+                {" | started: "}
+                {run.started_at}
+                {" | error: "}
+                {run.error || "none"}
+                {run.notifications.errors && run.notifications.errors.length > 0 ? (
+                  <div style={{ color: "#a33", marginTop: "4px" }}>
+                    notification errors: {run.notifications.errors.join(" | ")}
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
+        <h2>7) Advanced Source JSON (optional)</h2>
         <p>Use this if you want to register multiple sources in one submit.</p>
         <form action="/api/sources/register" method="post">
           <textarea
@@ -360,20 +401,6 @@ export default async function OpsPage() {
         )}
       </section>
 
-      <section style={{ border: "1px solid #ccc", borderRadius: "8px", padding: "16px" }}>
-        <h2>Recent Scheduled Runs</h2>
-        {runs.length === 0 ? (
-          <p>no scheduled runs logged yet</p>
-        ) : (
-          <ul>
-            {runs.map((run) => (
-              <li key={run.run_id}>
-                {run.status} | attempts: {run.attempts} | started: {run.started_at} | error: {run.error || "none"}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </main>
   );
 }

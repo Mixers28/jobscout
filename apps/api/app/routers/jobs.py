@@ -34,6 +34,7 @@ from jobscout_shared.schemas import (
 from ..dependencies import get_db_session
 from worker.packs.pipeline import get_latest_application_pack, run_pack_generation
 from worker.scheduler import run_scheduled_cycle
+from worker.scheduler.notifications import send_notifications
 from worker.scoring.pipeline import run_scoring
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -41,6 +42,13 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 class ScoreRunRequest(BaseModel):
     use_embeddings: bool = False
+
+
+class NotificationTestResponse(BaseModel):
+    attempted: int
+    sent: int
+    channels: list[dict[str, object]]
+    errors: list[str]
 
 
 ALLOWED_STAGE_TRANSITIONS: dict[str, set[str]] = {
@@ -264,6 +272,30 @@ async def trigger_scheduled_run(request: Request) -> SchedulerRunResponse:
         ingest_summary=result.ingest_summary,
         scoring_summary=result.scoring_summary,
         notifications=result.notifications,
+    )
+
+
+@router.post("/notifications/test", response_model=NotificationTestResponse)
+async def trigger_test_notification(request: Request) -> NotificationTestResponse:
+    settings = request.app.state.settings
+    summary = send_notifications(
+        settings=settings,
+        messages=[
+            {
+                "event": "manual_test",
+                "subject": "JobScout Test Notification",
+                "body": (
+                    "JobScout test notification.\n"
+                    "This confirms the configured notification channel can reach Discord."
+                ),
+            }
+        ],
+    )
+    return NotificationTestResponse(
+        attempted=int(summary.get("attempted", 0)),
+        sent=int(summary.get("sent", 0)),
+        channels=list(summary.get("channels", [])),
+        errors=[str(item) for item in summary.get("errors", [])],
     )
 
 
