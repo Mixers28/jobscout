@@ -21,6 +21,21 @@ services:
       timeout: 5s
       retries: 10
 
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    env_file: .env
+    environment:
+      JOBSCOUT_DATABASE_URL: postgresql+psycopg://jobscout:jobscout@postgres:5432/jobscout
+      JOBSCOUT_REDIS_URL: redis://redis:6379/0
+    command: ["python", "-m", "alembic", "-c", "alembic.ini", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   api:
     build:
       context: .
@@ -32,10 +47,8 @@ services:
       JOBSCOUT_DATABASE_URL: postgresql+psycopg://jobscout:jobscout@postgres:5432/jobscout
       JOBSCOUT_REDIS_URL: redis://redis:6379/0
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   worker:
     build:
@@ -46,10 +59,8 @@ services:
       JOBSCOUT_DATABASE_URL: postgresql+psycopg://jobscout:jobscout@postgres:5432/jobscout
       JOBSCOUT_REDIS_URL: redis://redis:6379/0
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   web:
     build:
@@ -62,7 +73,8 @@ services:
       # The browser always uses localhost:8001 (API port is published to host).
       API_BASE_URL: http://api:8000
     depends_on:
-      - api
+      api:
+        condition: service_started
 
 volumes:
   postgres_data:
