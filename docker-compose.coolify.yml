@@ -21,22 +21,6 @@ services:
       timeout: 5s
       retries: 10
 
-  migrate:
-    exclude_from_hc: true
-    build:
-      context: .
-      dockerfile: Dockerfile.api
-    env_file: .env
-    environment:
-      JOBSCOUT_DATABASE_URL: postgresql+psycopg://jobscout:jobscout@postgres:5432/jobscout
-      JOBSCOUT_REDIS_URL: redis://redis:6379/0
-    command: ["python", "-m", "alembic", "-c", "alembic.ini", "upgrade", "head"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
   api:
     build:
       context: .
@@ -48,8 +32,10 @@ services:
     expose:
       - "8000"
     depends_on:
-      migrate:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   worker:
     build:
@@ -60,8 +46,8 @@ services:
       JOBSCOUT_DATABASE_URL: postgresql+psycopg://jobscout:jobscout@postgres:5432/jobscout
       JOBSCOUT_REDIS_URL: redis://redis:6379/0
     depends_on:
-      migrate:
-        condition: service_completed_successfully
+      api:
+        condition: service_started
 
   web:
     build:
