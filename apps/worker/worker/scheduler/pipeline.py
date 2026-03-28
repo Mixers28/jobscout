@@ -20,6 +20,7 @@ from worker.scoring.pipeline import run_scoring
 from .notifications import (
     build_notification_messages,
     collect_notification_candidates,
+    mark_jobs_notified,
     send_notifications,
 )
 
@@ -124,6 +125,12 @@ def run_scheduled_cycle(
                 score_threshold=settings.notification_score_threshold,
             )
             notification_summary = send_notifications(settings=settings, messages=messages)
+            if notification_summary.get("sent", 0) > 0:
+                mark_jobs_notified(
+                    session_factory=session_factory,
+                    batch=batch,
+                    delivered_events=notification_summary.get("delivered_events", []),
+                )
 
             completed_at = _utc_now()
             payload = {

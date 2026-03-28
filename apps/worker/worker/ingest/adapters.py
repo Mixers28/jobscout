@@ -10,6 +10,7 @@ from datetime import datetime
 from email import message_from_bytes, message_from_string
 from email.utils import parsedate_to_datetime
 from html.parser import HTMLParser
+from typing import Any, cast
 from urllib import error, request
 from urllib.parse import urljoin, urlsplit, urlparse
 from xml.etree import ElementTree
@@ -160,7 +161,7 @@ def fetch_imap_messages(config: dict) -> tuple[list[str], list[str]]:
                 return [], []
 
             # Search for all unseen messages.
-            status, data = client.uid("search", None, "UNSEEN")
+            status, data = client.uid("search", cast(Any, None), "UNSEEN")
             if status != "OK" or not data or not data[0]:
                 return [], []
 

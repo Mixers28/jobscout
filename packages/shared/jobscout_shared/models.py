@@ -57,6 +57,7 @@ class JobMatch(Base):
     stage: Mapped[str] = mapped_column(String(32), nullable=False, default="new")
     reminder_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     outcome: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class ApplicationPack(Base):

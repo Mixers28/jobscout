@@ -10,6 +10,7 @@ from jobscout_shared.settings import Settings
 from worker.scheduler.notifications import (
     build_notification_messages,
     collect_notification_candidates,
+    mark_jobs_notified,
     send_notifications,
 )
 from worker.scheduler.pipeline import run_scheduled_cycle
@@ -158,6 +159,198 @@ def test_notification_batch_filters_threshold_and_lookback(tmp_path: Path) -> No
     assert any(message["event"] == "new_high_score_jobs" for message in messages)
 
 
+def test_already_notified_jobs_excluded_from_candidates(tmp_path: Path) -> None:
+    """Jobs with notified_at set should not appear in notification candidates."""
+    db_path = tmp_path / "scheduler_notified.db"
+    factory = _session_factory(db_path)
+
+    now = datetime.now(timezone.utc)
+    with factory() as session:
+        session.add(
+            Job(
+                id=1,
+                title="Already Notified",
+                company="A",
+                location_text="London",
+                url="https://jobs.example.com/old",
+                description_text="test role",
+                description_hash="h1",
+                fetched_at=now,
+            )
+        )
+        session.add(
+            Job(
+                id=2,
+                title="Brand New",
+                company="B",
+                location_text="Manchester",
+                url="https://jobs.example.com/new",
+                description_text="test role",
+                description_hash="h2",
+                fetched_at=now,
+            )
+        )
+        session.add(
+            JobMatch(
+                job_id=1,
+                total_score=95.0,
+                score_breakdown_json={},
+                reasons_json=["strong"],
+                missing_json=[],
+                decision="apply",
+                stage="new",
+                outcome="pending",
+                notified_at=now - timedelta(hours=12),
+            )
+        )
+        session.add(
+            JobMatch(
+                job_id=2,
+                total_score=85.0,
+                score_breakdown_json={},
+                reasons_json=["good"],
+                missing_json=[],
+                decision="review",
+                stage="new",
+                outcome="pending",
+            )
+        )
+        session.commit()
+
+    batch = collect_notification_candidates(
+        session_factory=factory,
+        top_n=5,
+        score_threshold=80.0,
+        lookback_hours=24,
+    )
+    # Only the un-notified job should appear
+    assert len(batch.top_jobs) == 1
+    assert batch.top_jobs[0].job_id == 2
+    assert len(batch.new_high_score_jobs) == 1
+    assert batch.new_high_score_jobs[0].job_id == 2
+
+
+def test_mark_jobs_notified_stamps_notified_at(tmp_path: Path) -> None:
+    """mark_jobs_notified should set notified_at on all jobs in the batch."""
+    db_path = tmp_path / "scheduler_mark.db"
+    factory = _session_factory(db_path)
+
+    now = datetime.now(timezone.utc)
+    with factory() as session:
+        session.add(
+            Job(
+                id=1,
+                title="Job A",
+                company="A",
+                url="https://jobs.example.com/a",
+                description_text="test",
+                description_hash="ha",
+                fetched_at=now,
+            )
+        )
+        session.add(
+            JobMatch(
+                job_id=1,
+                total_score=90.0,
+                score_breakdown_json={},
+                reasons_json=[],
+                missing_json=[],
+                decision="apply",
+                stage="new",
+                outcome="pending",
+            )
+        )
+        session.commit()
+
+    batch = collect_notification_candidates(
+        session_factory=factory, top_n=5, score_threshold=80.0, lookback_hours=24
+    )
+    assert len(batch.top_jobs) == 1
+
+    mark_jobs_notified(session_factory=factory, batch=batch)
+
+    # Second call should return no candidates
+    batch2 = collect_notification_candidates(
+        session_factory=factory, top_n=5, score_threshold=80.0, lookback_hours=24
+    )
+    assert len(batch2.top_jobs) == 0
+    assert len(batch2.new_high_score_jobs) == 0
+
+
+def test_mark_jobs_notified_only_stamps_jobs_for_delivered_events(tmp_path: Path) -> None:
+    """Jobs only covered by failed events should remain eligible for later notifications."""
+    db_path = tmp_path / "scheduler_partial_mark.db"
+    factory = _session_factory(db_path)
+
+    now = datetime.now(timezone.utc)
+    with factory() as session:
+        session.add(
+            Job(
+                id=1,
+                title="Top Job",
+                company="A",
+                url="https://jobs.example.com/top",
+                description_text="test",
+                description_hash="htop",
+                fetched_at=now,
+            )
+        )
+        session.add(
+            Job(
+                id=2,
+                title="High Score Only",
+                company="B",
+                url="https://jobs.example.com/high",
+                description_text="test",
+                description_hash="hhigh",
+                fetched_at=now - timedelta(minutes=1),
+            )
+        )
+        session.add(
+            JobMatch(
+                job_id=1,
+                total_score=95.0,
+                score_breakdown_json={},
+                reasons_json=[],
+                missing_json=[],
+                decision="apply",
+                stage="new",
+                outcome="pending",
+            )
+        )
+        session.add(
+            JobMatch(
+                job_id=2,
+                total_score=90.0,
+                score_breakdown_json={},
+                reasons_json=[],
+                missing_json=[],
+                decision="review",
+                stage="new",
+                outcome="pending",
+            )
+        )
+        session.commit()
+
+    batch = collect_notification_candidates(
+        session_factory=factory, top_n=1, score_threshold=80.0, lookback_hours=24
+    )
+    assert [candidate.job_id for candidate in batch.top_jobs] == [1]
+    assert [candidate.job_id for candidate in batch.new_high_score_jobs] == [1, 2]
+
+    mark_jobs_notified(
+        session_factory=factory,
+        batch=batch,
+        delivered_events=["top_jobs_daily"],
+    )
+
+    batch2 = collect_notification_candidates(
+        session_factory=factory, top_n=5, score_threshold=80.0, lookback_hours=24
+    )
+    assert [candidate.job_id for candidate in batch2.top_jobs] == [2]
+    assert [candidate.job_id for candidate in batch2.new_high_score_jobs] == [2]
+
+
 def test_send_notifications_sent_counter_counts_messages_not_channels() -> None:
     """sent should count messages delivered (≥1 channel ok), not channel successes."""
     settings = Settings(
@@ -190,6 +383,7 @@ def test_send_notifications_sent_counter_counts_messages_not_channels() -> None:
     # 2 messages attempted and both delivered — sent must equal attempted (2), not 4.
     assert summary["attempted"] == 2
     assert summary["sent"] == 2
+    assert summary["delivered_events"] == ["top_jobs_daily", "new_high_score_jobs"]
     assert summary["errors"] == []
 
 
@@ -221,4 +415,5 @@ def test_send_notifications_sent_counter_partial_failure() -> None:
 
     assert summary["attempted"] == 2
     assert summary["sent"] == 1
+    assert summary["delivered_events"] == ["new_high_score_jobs"]
     assert len(summary["errors"]) == 1

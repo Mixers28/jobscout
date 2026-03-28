@@ -8,7 +8,6 @@ Create Date: 2026-02-20
 from typing import Sequence
 
 from alembic import op
-import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "20260220_0003"

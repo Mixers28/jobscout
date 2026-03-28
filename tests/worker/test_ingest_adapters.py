@@ -58,7 +58,11 @@ def test_rss_adapter_fetches_feed_from_url(monkeypatch) -> None:
         </item>
     </channel></rss>
     """
-    monkeypatch.setattr(adapters, "_fetch_url_text", lambda _url: feed_xml)
+    monkeypatch.setattr(
+        adapters,
+        "_fetch_url_text",
+        lambda _url: (feed_xml, "https://feeds.example.com/jobs.xml"),
+    )
 
     output = parse_rss_jobs(
         "RSS Feed",
@@ -101,7 +105,11 @@ def test_whitelist_adapter_fetches_page_urls(monkeypatch) -> None:
         '<a href="/jobs/role-5" data-company="SiteCo" data-location="Inverness">'
         "Infrastructure Engineer</a>"
     )
-    monkeypatch.setattr(adapters, "_fetch_url_text", lambda _url: html)
+    monkeypatch.setattr(
+        adapters,
+        "_fetch_url_text",
+        lambda _url: (html, "https://careers.safe.example.com/jobs"),
+    )
 
     output = parse_whitelist_page_jobs(
         "Whitelist",

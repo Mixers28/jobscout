@@ -7,7 +7,7 @@ import smtplib
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
-from typing import Any
+from typing import Any, Iterable
 from urllib import error, request
 
 from sqlalchemy import select
@@ -62,6 +62,7 @@ def collect_notification_candidates(
                 JobMatch.decision,
             )
             .join(JobMatch, JobMatch.job_id == Job.id)
+            .where(JobMatch.notified_at.is_(None))
             .order_by(JobMatch.total_score.desc(), Job.fetched_at.desc(), Job.id.desc())
         )
         rows = session.execute(stmt).all()
@@ -87,6 +88,28 @@ def collect_notification_candidates(
     ]
 
     return NotificationBatch(top_jobs=top_jobs, new_high_score_jobs=new_high_score_jobs)
+
+
+def mark_jobs_notified(
+    session_factory: sessionmaker[Session],
+    batch: NotificationBatch,
+    delivered_events: Iterable[str] | None = None,
+) -> None:
+    """Stamp notified_at only for jobs covered by successfully delivered events."""
+    delivered = set(delivered_events or ("top_jobs_daily", "new_high_score_jobs"))
+    job_ids: set[int] = set()
+    if "top_jobs_daily" in delivered:
+        job_ids.update(candidate.job_id for candidate in batch.top_jobs)
+    if "new_high_score_jobs" in delivered:
+        job_ids.update(candidate.job_id for candidate in batch.new_high_score_jobs)
+    if not job_ids:
+        return
+    now = datetime.now(timezone.utc)
+    with session_factory() as session:
+        matches = session.query(JobMatch).filter(JobMatch.job_id.in_(job_ids)).all()
+        for match in matches:
+            match.notified_at = now
+        session.commit()
 
 
 def _format_jobs_lines(jobs: list[NotificationCandidate]) -> list[str]:
@@ -195,6 +218,7 @@ def send_notifications(settings: Settings, messages: list[dict[str, str]]) -> di
     summary: dict[str, Any] = {
         "attempted": len(messages),
         "sent": 0,
+        "delivered_events": [],
         "channels": [],
         "errors": [],
     }
@@ -239,5 +263,6 @@ def send_notifications(settings: Settings, messages: list[dict[str, str]]) -> di
 
         if any_channel_ok:
             summary["sent"] += 1
+            summary["delivered_events"].append(event)
 
     return summary
