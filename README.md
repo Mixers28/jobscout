@@ -81,6 +81,8 @@ Notes:
 - Notifications are only sent when candidates match rules:
   - top jobs daily (top `JOBSCOUT_NOTIFICATION_TOP_N`)
   - new jobs above `JOBSCOUT_NOTIFICATION_SCORE_THRESHOLD` within `JOBSCOUT_NOTIFICATION_LOOKBACK_HOURS`
+- Once a job has been delivered successfully, scheduler notifications stamp `job_matches.notified_at` and skip it on future runs.
+- Ingest normalization strips common job-board tracking params so Reed/Adzuna/Indeed alert variants collapse to one stored job when the underlying listing is the same.
 - If no webhook is set, scheduler still runs ingest + scoring + logs, but skips Discord delivery.
 
 ### Optional scheduler loop

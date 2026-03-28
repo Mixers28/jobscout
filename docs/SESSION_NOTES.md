@@ -4,6 +4,7 @@
 
 <!-- SUMMARY_START -->
 **Latest Summary (auto-maintained by Agent):**
+- 2026-03-28: Fixed repeated Discord job alerts by adding `notified_at`-based scheduler dedupe, successful-delivery-only stamping, job-board tracking URL canonicalization, non-job redirect filtering, and notification candidate collapse by `description_hash`. Pushed to `origin/main` at `2d40988`. Full checks green (`46 passed`, mypy, ruff, web typecheck/build earlier in session).
 - 2026-02-20: Gmail IMAP auto-polling live. `fetch_imap_messages()` added to email adapter; `seen_uids` written back after each cycle. System email filter blocks Google housekeeping noise. `/ops` now has 6 sections including email-paste and IMAP auto-scan forms. Next.js startup fixed (Node 20 via nvm). Adzuna scraper junk cleaned. Gmail forwarding from `mixers28@gmail.com` confirmed active.
 - 2026-02-20: Full codebase hardening pass: atomicity in `update_decision`, `response.ok` checks, DB uniqueness constraints (migration 0003), IntegrityError handling, YAML guardrail config (`prompt_guardrail.yml`), URL validation, notification counter fix. 39 tests passing.
 - 2026-02-19: Enforced runtime contracts for `RUBRIC.md` and `prompt_guardrail.md`, and auto-generated packs when decisions change to `apply`.
@@ -22,6 +23,53 @@
 ---
 
 ## Session Log
+
+### 2026-03-28 (Notification dedupe + duplicate alert cleanup)
+
+**Participants:** User, Codex Agent
+**Branch:** main
+
+### What we worked on
+- Investigated repeated Discord "Top jobs snapshot" messages showing the same Adzuna/Reed jobs under different tracking URLs.
+- Added `job_matches.notified_at` model field and migration `20260326_0004_add_notified_at_to_job_matches.py`.
+- Updated scheduler notification selection to skip already-notified jobs.
+- Updated notification stamping so only successfully delivered events mark jobs as notified, preventing partial-delivery suppression bugs.
+- Expanded URL canonicalization to strip common job-board tracking params (`se`, `sl`, `et`, `nid`, `v`, `c`, `deep_link_value`, etc.).
+- Tightened email alert ingestion to discard links that resolve to obvious non-job pages (Google/Reed/Adzuna promo/search redirects).
+- Collapsed scheduler notification candidates by `description_hash` so historical duplicate rows already in the DB do not keep repeating in the daily top snapshot.
+- Ran focused worker tests, then full Python quality gates; earlier in the session also verified web typecheck and production build.
+- Pushed two commits to `origin/main`:
+  - `24230c2` `worker: dedupe notifications and fix checks`
+  - `2d40988` `worker: collapse duplicate job alerts`
+
+### Files touched
+- packages/shared/jobscout_shared/models.py
+- packages/shared/jobscout_shared/normalization.py
+- apps/worker/worker/ingest/adapters.py
+- apps/worker/worker/scheduler/notifications.py
+- apps/worker/worker/scheduler/pipeline.py
+- infra/migrations/versions/20260326_0004_add_notified_at_to_job_matches.py
+- tests/worker/test_ingest_adapters.py
+- tests/worker/test_ingest_pipeline.py
+- tests/worker/test_scheduler_pipeline.py
+- README.md
+- docs/NOW.md
+- docs/PROJECT_CONTEXT.md
+- docs/SESSION_NOTES.md
+
+### Outcomes / Decisions
+- The repeated alert issue was traced to tracking-query variants plus historical duplicate rows, not just the lack of notification stamping.
+- Scheduler notifications now have two layers of protection:
+  - delivered jobs are stamped via `notified_at`
+  - duplicate candidate rows collapse by `description_hash`
+- Current verified baseline:
+  - `make test`: pass (`46 passed`)
+  - `make typecheck`: pass
+  - `make lint`: pass
+
+### Follow-up
+- Confirm Coolify deploys commit `2d40988`.
+- Verify the next live Discord scheduler run no longer repeats the prior Adzuna/Reed backlog.
 
 ### 2026-02-18 (Web Ops Console for source setup and pipeline control)
 

@@ -9,7 +9,7 @@
 - Canonical contracts are fixed: `SPEC.md`, `RUBRIC.md`, `BUILD_PLAN.md`, `skills_profile.json`, `truth_bank.yml`, `scoring_weights.yml`, `prompt_guardrail.md` / `prompt_guardrail.yml`.
 - Human remains in the loop for final submission; no brittle auto-apply automation in v0.1.
 - Evidence-backed generation is mandatory: unsupported outputs must return `NEEDS_USER_INPUT`.
-- Current implementation status: Sprint 0-4 fully implemented, hardened, and runtime-validated. Gmail IMAP auto-polling live. 39 tests passing.
+- Current implementation status: Sprint 0-4 fully implemented, hardened, and runtime-validated. Gmail IMAP auto-polling live. Scheduler notification dedupe is in place. 46 tests passing.
 <!-- SUMMARY_END -->
 
 ---
@@ -55,12 +55,15 @@
 ## 5. Architecture Snapshot (v0.1)
 - Ingestion worker pulls from email alerts (IMAP auto-poll or manual paste), RSS feeds, and whitelisted pages; normalizes and deduplicates jobs.
 - Gmail IMAP auto-polling: `fetch_imap_messages()` uses stdlib `imaplib`; `seen_uids` persisted in `source.config_json` to avoid re-processing; system emails filtered.
+- URL normalization strips common job-board tracking params so alert variants from Reed/Adzuna/Indeed collapse to one job identity when the underlying listing is the same.
 - Matching engine applies hard filters + weighted scoring + explainability fields.
 - Pack generator drafts CV/cover/Q&A with evidence map.
 - Guardrail contract loaded from `prompt_guardrail.yml` (structured YAML) with `prompt_guardrail.md` markdown fallback.
 - Guardrail validator blocks unsupported claims and emits `NEEDS_USER_INPUT` when required.
 - Setting a job decision to `apply` auto-generates a fresh application pack for review (with rollback on pack failure).
 - Scheduler runs ingest+score with retries/dead-letter logs and optional Discord/SMTP notifications.
+- Notification dedupe uses `job_matches.notified_at` so already-delivered jobs are excluded from future candidate selection.
+- Scheduler notification candidates also collapse duplicate rows by `description_hash`, which mitigates historical duplicate rows already present in the DB.
 - Dashboard shows inbox, scores, tracking status, scheduler run logs, analytics, and generated pack artifacts.
 - Ops Console has 6 sections: Quick Add Website, RSS, Email Paste, Auto-Scan IMAP, Run Pipeline, Advanced JSON.
 - DB uniqueness constraints on `sources(name, type)` and `jobs(url, description_hash)` enforced at DB and application level.
@@ -93,3 +96,6 @@
 - `2026-02-19` - Improved ingestion UX with quick-add Website/RSS forms and URL-based source fetching for whitelisted pages and RSS feeds.
 - `2026-02-20` - Hardening pass: atomic `update_decision`, `response.ok` checks, DB uniqueness constraints (migration 0003), IntegrityError race handling, YAML guardrail, URL validation, notification counter fix. 39 tests passing.
 - `2026-02-20` - Gmail IMAP auto-polling live: `fetch_imap_messages()`, `seen_uids` write-back, system email filter, IMAP settings, `/ops` IMAP form, `make run-web` Node 20 fix.
+- `2026-03-23` - Added Discord notification test action in Ops/API flow for quick webhook verification.
+- `2026-03-28` - Added `notified_at` tracking (migration `20260326_0004`) so scheduler notifications skip already-notified jobs and only stamp successfully delivered events.
+- `2026-03-28` - Fixed duplicate job alert noise by stripping common job-board tracking params during URL canonicalization, discarding obvious non-job redirect pages, and collapsing notification candidates by `description_hash`. 46 tests passing.

@@ -9,14 +9,15 @@
 - System email noise (Google security alerts, welcome emails) is filtered before ingest.
 - Ops Console now has 6 sections: Quick Add Website, RSS, Email Paste, Auto-Scan IMAP, Run Pipeline, Advanced JSON.
 - Next.js dev server requires Node 20 (`make run-web` now uses nvm Node 20 automatically).
-- All 39 tests passing. DB is clean (270 Adzuna scraper junk jobs removed, scraper disabled).
-- Waiting for first real job-alert emails to arrive from Reed/Adzuna/LinkedIn saved searches.
+- Scheduler notifications now stamp `job_matches.notified_at` and skip already-notified jobs.
+- Job-board tracking URL variants are collapsed during normalization, and scheduler notification candidates collapse duplicate rows by `description_hash`.
+- All 46 tests passing. Recent duplicate-alert fix pushed to `origin/main` at `2d40988`.
 <!-- SUMMARY_END -->
 
 ---
 
 ## Current Objective
-Receive and process first real job alert emails; validate end-to-end ingest → score → inbox workflow with live data.
+Verify deployed scheduler behavior after the duplicate-alert fix and confirm Discord no longer repeats the same Adzuna/Reed backlog.
 
 ---
 
@@ -66,14 +67,17 @@ Receive and process first real job alert emails; validate end-to-end ingest → 
 - [x] Fix Next.js startup: `make run-web` target uses nvm Node 20 to satisfy Next.js >=20.9.0 requirement.
 - [x] Clean up 270 Adzuna scraper junk jobs; disable Adzuna whitelist source (was scraping nav links, not jobs).
 - [x] Confirm Gmail forwarding from `mixers28@gmail.com` active.
+- [x] Add `notified_at` tracking to suppress repeat scheduler notifications for already-delivered jobs.
+- [x] Fix partial-delivery notification stamping so only successfully delivered events mark jobs as notified.
+- [x] Collapse common job-board tracking URL variants (`se`, `sl`, `et`, `nid`, `v`, etc.) during ingestion dedupe.
+- [x] Collapse duplicate scheduler notification candidates by `description_hash` to avoid repeating old duplicate rows already in the DB.
 
 ---
 
 ## Next Small Deliverables
-- Subscribe to job alerts on Reed, Adzuna, LinkedIn, CWJobs using `mixers28@gmail.com` as notification address.
-- Wait for first forwarded alert emails; run ingest and confirm real jobs appear in the dashboard.
-- Configure `JOBSCOUT_DISCORD_WEBHOOK_URL` in `.env` to enable daily Discord notifications.
-- Run one full end-to-end workflow: ingest → score → auto-pack on apply → tracking update → analytics review.
+- Confirm Coolify has deployed `origin/main` at commit `2d40988`.
+- Watch the next scheduled Discord run and verify previously repeated Adzuna/Reed jobs do not reappear as fresh top-job duplicates.
+- If duplicate alerts persist, inspect the production DB for historical duplicate `jobs` rows and whether `job_matches.notified_at` is being populated after send.
 
 ---
 
