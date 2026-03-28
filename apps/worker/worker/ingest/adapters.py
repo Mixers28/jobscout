@@ -252,6 +252,7 @@ _EMAIL_NAV_URL_FRAGMENTS = (
     "fonts.gstatic", "fonts.googleapis",
     "/opt_out_alert", "/value-my-cv", "/in-your-inbox",
     "/privacy-policy", "/terms-and-conditions", "/jobs/search",
+    "indeed.com/jobs?",
     # Indeed redirect/tracking links that don't resolve to job pages
     "e.jm.indeed.com", "engage.indeed.com", "subscriptions.indeed.com",
     "indeed.com/rc/clk", "indeed.com/pagead/clk",
@@ -261,8 +262,12 @@ _EMAIL_NAV_URL_FRAGMENTS = (
 
 # Substrings in fetched page content that indicate the page is not a real job listing.
 _BAD_PAGE_CONTENT_MARKERS = (
+    "find your next job from the 200,000 available",
     "google has many special features",
+    "jobs in london, the uk & beyond | adzuna",
     "search the world's information",
+    "the uk's #1 job site",
+    "we search thousands of job sites so that you don't have to",
     "enable javascript",
     "please enable cookies",
     "access denied",
@@ -393,8 +398,8 @@ def parse_email_alert_jobs(source_name: str, config_json: dict) -> AdapterOutput
                     if not any(marker in page_lower for marker in _BAD_PAGE_CONTENT_MARKERS):
                         description = page_text
                     else:
-                        # Bad redirect — revert to original tracking URL
-                        canonical_url = url
+                        # Bad redirect or homepage/promo content: discard the listing.
+                        continue
 
             if not description:
                 # Fall back to the email body so scoring has something to work with.

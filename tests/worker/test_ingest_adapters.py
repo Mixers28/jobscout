@@ -123,3 +123,28 @@ def test_whitelist_adapter_fetches_page_urls(monkeypatch) -> None:
     assert len(output.jobs) == 1
     assert output.jobs[0].title == "Infrastructure Engineer"
     assert output.jobs[0].company == "SiteCo"
+
+
+def test_email_adapter_skips_links_that_resolve_to_non_job_pages(monkeypatch) -> None:
+    monkeypatch.setattr(
+        adapters,
+        "_fetch_url_text",
+        lambda _url: (
+            "Google Search the world's information, including webpages, images, videos and more.",
+            "https://www.google.com/",
+        ),
+    )
+
+    output = parse_email_alert_jobs(
+        "Email Alerts",
+        {
+            "company": "AlertCo",
+            "messages": [
+                "Subject: Service Desk Analyst\nDate: Tue, 18 Feb 2026 10:00:00 +0000\n\n"
+                "Apply here https://example.com/tracking/job-1"
+            ],
+        },
+    )
+
+    assert output.seen == 1
+    assert output.jobs == []

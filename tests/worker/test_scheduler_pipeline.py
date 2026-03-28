@@ -230,6 +230,71 @@ def test_already_notified_jobs_excluded_from_candidates(tmp_path: Path) -> None:
     assert batch.new_high_score_jobs[0].job_id == 2
 
 
+def test_duplicate_rows_with_same_description_hash_collapse_to_one_candidate(tmp_path: Path) -> None:
+    db_path = tmp_path / "scheduler_duplicate_rows.db"
+    factory = _session_factory(db_path)
+
+    now = datetime.now(timezone.utc)
+    with factory() as session:
+        session.add(
+            Job(
+                id=1,
+                title="Service desk Analyst L1",
+                company="A",
+                url="https://www.adzuna.co.uk/jobs/details/5660329908?se=first",
+                description_text="same description",
+                description_hash="same-hash",
+                fetched_at=now,
+            )
+        )
+        session.add(
+            Job(
+                id=2,
+                title="Service desk Analyst L1",
+                company="A",
+                url="https://www.adzuna.co.uk/jobs/details/5660329908?se=second",
+                description_text="same description",
+                description_hash="same-hash",
+                fetched_at=now - timedelta(minutes=1),
+            )
+        )
+        session.add(
+            JobMatch(
+                job_id=1,
+                total_score=95.0,
+                score_breakdown_json={},
+                reasons_json=["strong"],
+                missing_json=[],
+                decision="apply",
+                stage="new",
+                outcome="pending",
+            )
+        )
+        session.add(
+            JobMatch(
+                job_id=2,
+                total_score=94.0,
+                score_breakdown_json={},
+                reasons_json=["strong"],
+                missing_json=[],
+                decision="apply",
+                stage="new",
+                outcome="pending",
+            )
+        )
+        session.commit()
+
+    batch = collect_notification_candidates(
+        session_factory=factory,
+        top_n=5,
+        score_threshold=80.0,
+        lookback_hours=24,
+    )
+
+    assert [candidate.job_id for candidate in batch.top_jobs] == [1]
+    assert [candidate.job_id for candidate in batch.new_high_score_jobs] == [1]
+
+
 def test_mark_jobs_notified_stamps_notified_at(tmp_path: Path) -> None:
     """mark_jobs_notified should set notified_at on all jobs in the batch."""
     db_path = tmp_path / "scheduler_mark.db"

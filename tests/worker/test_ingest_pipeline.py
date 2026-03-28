@@ -56,6 +56,47 @@ def test_pipeline_dedupes_by_canonical_url_and_description_hash(tmp_path: Path) 
     assert jobs[0].url == "https://jobs.example.com/role-2"
 
 
+def test_pipeline_dedupes_tracking_variants_for_job_board_links(tmp_path: Path) -> None:
+    db_path = tmp_path / "ingest_tracking_variants.db"
+    factory = _session_factory(db_path)
+
+    sources = [
+        SourceDefinition(
+            name="RSS Feed",
+            type="rss",
+            enabled=True,
+            config_json={
+                "feed_xml": """
+                <rss><channel>
+                    <item>
+                        <title>Service desk Analyst L1 ( ITIL Certified)</title>
+                        <link>https://www.adzuna.co.uk/jobs/details/5660329908?et=jre&amp;nid=122347813&amp;se=abc123&amp;sl=sl6&amp;v=BB4445915E2D42929E1FFAA1416FFA5D8A9ED232</link>
+                        <description>Graduate with Minimum 3+ years of experience in service Desk</description>
+                        <company>Adzuna</company>
+                    </item>
+                    <item>
+                        <title>Service desk Analyst L1 ( ITIL Certified)</title>
+                        <link>https://www.adzuna.co.uk/jobs/details/5660329908?et=jre&amp;nid=122347813&amp;se=xyz789&amp;sl=sl4&amp;v=BB4445915E2D42929E1FFAA1416FFA5D8A9ED232</link>
+                        <description>Graduate with Minimum 3+ years of experience in service Desk</description>
+                        <company>Adzuna</company>
+                    </item>
+                </channel></rss>
+                """,
+            },
+        )
+    ]
+
+    result = run_ingest(factory, source_definitions=sources)
+
+    with factory() as session:
+        jobs = session.execute(select(Job).order_by(Job.id.asc())).scalars().all()
+
+    assert result.jobs_inserted == 1
+    assert result.jobs_deduped == 1
+    assert len(jobs) == 1
+    assert jobs[0].url == "https://www.adzuna.co.uk/jobs/details/5660329908"
+
+
 def test_pipeline_handles_integrity_error_as_dedupe(tmp_path: Path) -> None:
     """IntegrityError from a concurrent insert is treated as a dedupe, not a crash."""
     db_path = tmp_path / "ingest_race.db"

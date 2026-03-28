@@ -7,7 +7,29 @@ import re
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 TRACKING_QUERY_PREFIXES = ("utm_",)
-TRACKING_QUERY_KEYS = {"gclid", "fbclid", "mc_cid", "mc_eid"}
+TRACKING_QUERY_KEYS = {
+    "alid",
+    "c",
+    "co",
+    "deep_link_value",
+    "et",
+    "fbclid",
+    "fr",
+    "from",
+    "fromage",
+    "gclid",
+    "i",
+    "mc_cid",
+    "mc_eid",
+    "nid",
+    "rec",
+    "se",
+    "sl",
+    "t",
+    "tmtk",
+    "token",
+    "v",
+}
 
 
 def normalize_whitespace(value: str) -> str:

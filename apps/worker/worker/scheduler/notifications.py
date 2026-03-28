@@ -23,6 +23,7 @@ class NotificationCandidate:
     title: str
     company: str
     url: str
+    description_hash: str
     total_score: float
     decision: str
     fetched_at: datetime
@@ -57,6 +58,7 @@ def collect_notification_candidates(
                 Job.title,
                 Job.company,
                 Job.url,
+                Job.description_hash,
                 Job.fetched_at,
                 JobMatch.total_score,
                 JobMatch.decision,
@@ -67,18 +69,26 @@ def collect_notification_candidates(
         )
         rows = session.execute(stmt).all()
 
-    candidates = [
-        NotificationCandidate(
-            job_id=row.id,
-            title=row.title,
-            company=row.company,
-            url=row.url,
-            total_score=float(row.total_score or 0.0),
-            decision=str(row.decision or "review"),
-            fetched_at=_coerce_datetime(row.fetched_at),
+    seen_description_hashes: set[str] = set()
+    candidates: list[NotificationCandidate] = []
+    for row in rows:
+        description_hash = str(row.description_hash or "")
+        if description_hash and description_hash in seen_description_hashes:
+            continue
+        if description_hash:
+            seen_description_hashes.add(description_hash)
+        candidates.append(
+            NotificationCandidate(
+                job_id=row.id,
+                title=row.title,
+                company=row.company,
+                url=row.url,
+                description_hash=description_hash,
+                total_score=float(row.total_score or 0.0),
+                decision=str(row.decision or "review"),
+                fetched_at=_coerce_datetime(row.fetched_at),
+            )
         )
-        for row in rows
-    ]
 
     top_jobs = candidates[: max(1, top_n)]
     new_high_score_jobs = [
