@@ -295,6 +295,73 @@ def test_duplicate_rows_with_same_description_hash_collapse_to_one_candidate(tmp
     assert [candidate.job_id for candidate in batch.new_high_score_jobs] == [1]
 
 
+def test_duplicate_rows_with_different_description_hashes_same_listing_collapse_to_one_candidate(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "scheduler_duplicate_listing_rows.db"
+    factory = _session_factory(db_path)
+
+    now = datetime.now(timezone.utc)
+    with factory() as session:
+        session.add(
+            Job(
+                id=1,
+                title="Service desk Analyst L1",
+                company="Gmail Job Alerts",
+                url="https://www.adzuna.co.uk/jobs/details/5660329908?se=first",
+                description_text="same description v1",
+                description_hash="hash-one",
+                fetched_at=now,
+            )
+        )
+        session.add(
+            Job(
+                id=2,
+                title="Service desk Analyst L1",
+                company="Gmail Job Alerts",
+                url="https://www.adzuna.co.uk/jobs/details/5660329908?se=second",
+                description_text="same description v2 with more body text",
+                description_hash="hash-two",
+                fetched_at=now - timedelta(minutes=1),
+            )
+        )
+        session.add(
+            JobMatch(
+                job_id=1,
+                total_score=95.0,
+                score_breakdown_json={},
+                reasons_json=["strong"],
+                missing_json=[],
+                decision="apply",
+                stage="new",
+                outcome="pending",
+            )
+        )
+        session.add(
+            JobMatch(
+                job_id=2,
+                total_score=94.0,
+                score_breakdown_json={},
+                reasons_json=["strong"],
+                missing_json=[],
+                decision="apply",
+                stage="new",
+                outcome="pending",
+            )
+        )
+        session.commit()
+
+    batch = collect_notification_candidates(
+        session_factory=factory,
+        top_n=5,
+        score_threshold=80.0,
+        lookback_hours=24,
+    )
+
+    assert [candidate.job_id for candidate in batch.top_jobs] == [1]
+    assert [candidate.job_id for candidate in batch.new_high_score_jobs] == [1]
+
+
 def test_mark_jobs_notified_stamps_notified_at(tmp_path: Path) -> None:
     """mark_jobs_notified should set notified_at on all jobs in the batch."""
     db_path = tmp_path / "scheduler_mark.db"
@@ -335,6 +402,74 @@ def test_mark_jobs_notified_stamps_notified_at(tmp_path: Path) -> None:
     mark_jobs_notified(session_factory=factory, batch=batch)
 
     # Second call should return no candidates
+    batch2 = collect_notification_candidates(
+        session_factory=factory, top_n=5, score_threshold=80.0, lookback_hours=24
+    )
+    assert len(batch2.top_jobs) == 0
+    assert len(batch2.new_high_score_jobs) == 0
+
+
+def test_mark_jobs_notified_stamps_sibling_duplicates_for_same_listing(tmp_path: Path) -> None:
+    db_path = tmp_path / "scheduler_mark_duplicate_listing.db"
+    factory = _session_factory(db_path)
+
+    now = datetime.now(timezone.utc)
+    with factory() as session:
+        session.add(
+            Job(
+                id=1,
+                title="Service desk Analyst L1",
+                company="Gmail Job Alerts",
+                url="https://www.adzuna.co.uk/jobs/details/5660329908?se=first",
+                description_text="test v1",
+                description_hash="hash-one",
+                fetched_at=now,
+            )
+        )
+        session.add(
+            Job(
+                id=2,
+                title="Service desk Analyst L1",
+                company="Gmail Job Alerts",
+                url="https://www.adzuna.co.uk/jobs/details/5660329908?se=second",
+                description_text="test v2",
+                description_hash="hash-two",
+                fetched_at=now - timedelta(minutes=1),
+            )
+        )
+        session.add(
+            JobMatch(
+                job_id=1,
+                total_score=95.0,
+                score_breakdown_json={},
+                reasons_json=[],
+                missing_json=[],
+                decision="apply",
+                stage="new",
+                outcome="pending",
+            )
+        )
+        session.add(
+            JobMatch(
+                job_id=2,
+                total_score=94.0,
+                score_breakdown_json={},
+                reasons_json=[],
+                missing_json=[],
+                decision="apply",
+                stage="new",
+                outcome="pending",
+            )
+        )
+        session.commit()
+
+    batch = collect_notification_candidates(
+        session_factory=factory, top_n=5, score_threshold=80.0, lookback_hours=24
+    )
+    assert [candidate.job_id for candidate in batch.top_jobs] == [1]
+
+    mark_jobs_notified(session_factory=factory, batch=batch)
+
     batch2 = collect_notification_candidates(
         session_factory=factory, top_n=5, score_threshold=80.0, lookback_hours=24
     )

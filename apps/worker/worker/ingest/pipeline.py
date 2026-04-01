@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from jobscout_shared.models import Job, Source
-from jobscout_shared.normalization import canonicalize_url, compute_description_hash
+from jobscout_shared.normalization import canonicalize_url, compute_description_hash, compute_job_identity
 from jobscout_shared.schemas import IngestionRunResponse, NormalizedJob, SourceDefinition
 
 from .adapters import parse_email_alert_jobs, parse_rss_jobs, parse_whitelist_page_jobs
@@ -32,6 +32,11 @@ def _adapt_source(source: Source) -> tuple[list[NormalizedJob], int, list[str]]:
 def _persist_job(session: Session, source: Source, normalized_job: NormalizedJob) -> bool:
     canonical_url = canonicalize_url(normalized_job.url)
     description_hash = compute_description_hash(normalized_job.description_text)
+    listing_identity = compute_job_identity(
+        canonical_url,
+        title=normalized_job.title,
+        company=normalized_job.company,
+    )
 
     existing = session.execute(
         select(Job.id).where(Job.url == canonical_url, Job.description_hash == description_hash)
@@ -39,6 +44,20 @@ def _persist_job(session: Session, source: Source, normalized_job: NormalizedJob
 
     if existing is not None:
         return False
+
+    existing_rows = session.execute(
+        select(Job.url, Job.title, Job.company).where(Job.url == canonical_url)
+    ).all()
+    for existing_url, existing_title, existing_company in existing_rows:
+        if (
+            compute_job_identity(
+                str(existing_url),
+                title=str(existing_title or ""),
+                company=str(existing_company or ""),
+            )
+            == listing_identity
+        ):
+            return False
 
     session.add(
         Job(

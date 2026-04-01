@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from jobscout_shared.models import Job, JobMatch
+from jobscout_shared.normalization import compute_job_identity
 from jobscout_shared.settings import Settings
 
 
@@ -23,6 +24,7 @@ class NotificationCandidate:
     title: str
     company: str
     url: str
+    listing_identity: str
     description_hash: str
     total_score: float
     decision: str
@@ -69,20 +71,27 @@ def collect_notification_candidates(
         )
         rows = session.execute(stmt).all()
 
-    seen_description_hashes: set[str] = set()
+    seen_listing_identities: set[str] = set()
     candidates: list[NotificationCandidate] = []
     for row in rows:
+        listing_identity = compute_job_identity(
+            str(row.url or ""),
+            title=str(row.title or ""),
+            company=str(row.company or ""),
+        )
         description_hash = str(row.description_hash or "")
-        if description_hash and description_hash in seen_description_hashes:
+        dedupe_key = listing_identity or description_hash
+        if dedupe_key and dedupe_key in seen_listing_identities:
             continue
-        if description_hash:
-            seen_description_hashes.add(description_hash)
+        if dedupe_key:
+            seen_listing_identities.add(dedupe_key)
         candidates.append(
             NotificationCandidate(
                 job_id=row.id,
                 title=row.title,
                 company=row.company,
                 url=row.url,
+                listing_identity=listing_identity,
                 description_hash=description_hash,
                 total_score=float(row.total_score or 0.0),
                 decision=str(row.decision or "review"),
@@ -107,17 +116,29 @@ def mark_jobs_notified(
 ) -> None:
     """Stamp notified_at only for jobs covered by successfully delivered events."""
     delivered = set(delivered_events or ("top_jobs_daily", "new_high_score_jobs"))
-    job_ids: set[int] = set()
+    listing_identities: set[str] = set()
     if "top_jobs_daily" in delivered:
-        job_ids.update(candidate.job_id for candidate in batch.top_jobs)
+        listing_identities.update(candidate.listing_identity for candidate in batch.top_jobs)
     if "new_high_score_jobs" in delivered:
-        job_ids.update(candidate.job_id for candidate in batch.new_high_score_jobs)
-    if not job_ids:
+        listing_identities.update(candidate.listing_identity for candidate in batch.new_high_score_jobs)
+    listing_identities.discard("")
+    if not listing_identities:
         return
     now = datetime.now(timezone.utc)
     with session_factory() as session:
-        matches = session.query(JobMatch).filter(JobMatch.job_id.in_(job_ids)).all()
-        for match in matches:
+        rows = session.execute(
+            select(JobMatch, Job.url, Job.title, Job.company)
+            .join(Job, Job.id == JobMatch.job_id)
+            .where(JobMatch.notified_at.is_(None))
+        ).all()
+        for match, url, title, company in rows:
+            listing_identity = compute_job_identity(
+                str(url or ""),
+                title=str(title or ""),
+                company=str(company or ""),
+            )
+            if listing_identity not in listing_identities:
+                continue
             match.notified_at = now
         session.commit()
 
